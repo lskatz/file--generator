@@ -57,7 +57,9 @@ Create a new instance of the file generator with the following options
 
   Applicable arguments:
   Argument     Default    Description
-  seed         0          A seed for a random number generator
+  seed         0          A seed for a random number generator.
+                          Instances of this script with the same
+                          seed will produce the same results.
 
 =back
 
@@ -89,12 +91,16 @@ sub new{
 
 =over
 
-=item $generator->generate($fileType)
+=item $generator->generate($fileType,\%options)
 
 Generate a type of file
 
   Arguments: $fileType (string) - a type of file to generate
-                Available types: "fastq"
+                Available types: "fastq", "fasta"
+             %options
+               maxbytes - up to how many bytes of the output
+                          you want to make. 
+
   Returns:   Path to a file (string)
 
 =back
@@ -107,35 +113,75 @@ sub generate{
   $type=uc($type);
 
   if($type eq "FASTQ"){
-    return $self->generateFastq($settings);
+    return $self->_generateFastq($settings);
+  } elsif($type eq "FASTA"){
+    return $self->_generateFasta($settings);
   } else {
     die "ERROR: I do not understand type $type";
   }
 }
 
-sub generateFastq{
+sub _generateFastq{
   my($self,$settings)=@_;
   $$settings{maxbytes}    ||= 1000;
 
   my @NT=qw(A C G T);
 
   $self->{_fileCounter}++;
+  my $currentQual=ord("A");
+  my $maxQual = ord("I");
   
   my $filename = $self->{tempdir}."/file.".$self->{_fileCounter}.".fastq";
   open(my $fh, ">", $filename) or die "ERROR: could not write to $filename: $!";
   my $readCounter=0;
   my $numBytes=0;
   while($numBytes < $$settings{maxbytes}){
+    #print "$numBytes   $$settings{maxbytes}\n";
     $readCounter++;
     my $entry="\@$readCounter\n";
     for(my $i=0;$i<150;$i++){
       $entry.=$NT[rand(4)];
     }
     $entry.="\n+\n";
-    $entry.="I" x 150;
+    for(my $i=0;$i<150;$i++){
+      my $nextQual = $currentQual + int(rand(3)) - 1;
+      $nextQual = $maxQual if($nextQual > $maxQual);
+      $entry .= chr($nextQual);
+      $currentQual = $nextQual;
+    }
     $entry.="\n";
 
-    $numBytes.=length($entry);
+    $numBytes+=length($entry);
+    if($numBytes < $$settings{maxbytes}){
+      print $fh $entry;
+    }
+  }
+  close $fh;
+
+  return $filename;
+}
+
+sub _generateFasta{
+  my($self,$settings)=@_;
+  $$settings{maxbytes}    ||= 1000;
+
+  my @NT=qw(A C G T);
+
+  $self->{_fileCounter}++;
+  my $currentQual=ord("A");
+  
+  my $filename = $self->{tempdir}."/file.".$self->{_fileCounter}.".fasta";
+  open(my $fh, ">", $filename) or die "ERROR: could not write to $filename: $!";
+  my $readCounter=0;
+  my $numBytes=0;
+  while($numBytes < $$settings{maxbytes}){
+    $readCounter++;
+    my $entry=">$readCounter\n";
+    for(my $i=0;$i<150;$i++){
+      $entry.=$NT[rand(4)];
+    }
+    $entry.="\n";
+    $numBytes+=length($entry);
     if($numBytes < $$settings{maxbytes}){
       print $fh $entry;
     }
