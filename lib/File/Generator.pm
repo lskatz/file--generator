@@ -36,7 +36,7 @@ A module for exporting test files
   use warnings;
   use File::Generator
   
-  my $generator = File::Generator->new({seed=>12345});
+  my $generator = File::Generator->new();
   my $fastqFile = $generator->generate("fastq");
   my $fastqFile2= $generator->generate("fastq");
   my $largeFastq= $generator->generate("fastq",{maxbytes=>10000});
@@ -57,9 +57,8 @@ Create a new instance of the file generator with the following options
 
   Applicable arguments:
   Argument     Default    Description
-  seed         0          A seed for a random number generator.
-                          Instances of this script with the same
-                          seed will produce the same results.
+  tempdir                 A temporary directory. If not supplied,
+                          one will be created for you in $TMPDIR
 
 =back
 
@@ -69,19 +68,15 @@ sub new{
   my($class,$settings)=@_;
 
   # Set optional parameter defaults
-  $$settings{seed}        ||=0;
   $$settings{tempdir}     ||=tempdir("Generator.pm.XXXXXX",TMPDIR=>1,CLEANUP=>1);
 
   # Initialize the object and then bless it
   my $self={
-    seed         => $$settings{seed},
     tempdir      => $$settings{tempdir},
     _fileCounter => 0, # how many files this generator has made
   };
 
   bless($self);
-
-  srand($self->{seed});
 
   return $self;
 }
