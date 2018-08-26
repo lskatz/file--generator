@@ -31,7 +31,7 @@ WriteMakefile1(
     resources => {
       repository => {
         type => 'git',
-        url => 'git://github.com/lskatz/file--generator.git'
+        url => 'git://github.com/lskatz/file--generator.git',
         web => 'https://github.com/lskatz/file--generator',
       },
     },
