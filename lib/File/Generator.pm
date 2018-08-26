@@ -5,7 +5,7 @@
 
 package File::Generator;
 require 5.12.0;
-our $VERSION=0.1;
+our $VERSION=0.2;
 
 use strict;
 use warnings;
