@@ -26,7 +26,7 @@ local $SIG{'__DIE__'} = sub { my $e = $_[0]; $e =~ s/(at [^\s]+? line \d+\.$)/\n
 
 =head1 NAME
 
-File::Generator
+File::Generator - Generate random test files.
 
 =head1 SYNOPSIS
 
